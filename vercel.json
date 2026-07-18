@@ -1,0 +1,24 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": ["sin1"],
+  "functions": {
+    "api/**/*.py": { "maxDuration": 60, "excludeFiles": "tests/**" }
+  },
+  "rewrites": [
+    { "source": "/api/auth/login", "destination": "/api/auth_login" },
+    { "source": "/api/auth/logout", "destination": "/api/auth_logout" },
+    { "source": "/api/auth/session", "destination": "/api/auth_session" },
+    { "source": "/api/documents/upload", "destination": "/api/documents_upload" },
+    { "source": "/api/documents/finalize", "destination": "/api/documents_finalize" },
+    { "source": "/api/documents/extract", "destination": "/api/documents_extract" },
+    { "source": "/api/documents/search", "destination": "/api/documents_search" },
+    { "source": "/api/ai/chat", "destination": "/api/ai_chat" },
+    { "source": "/api/ai/analyze-project", "destination": "/api/ai_analyze_project" },
+    { "source": "/api/ai/proposal", "destination": "/api/ai_proposal" },
+    { "source": "/api/telegram/webhook", "destination": "/api/telegram_webhook" },
+    { "source": "/api/telegram/set-webhook", "destination": "/api/telegram_set_webhook" },
+    { "source": "/api/reminders/morning", "destination": "/api/reminders_morning" },
+    { "source": "/api/reminders/evening", "destination": "/api/reminders_evening" }
+  ]
+}
+

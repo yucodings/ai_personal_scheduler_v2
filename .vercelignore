@@ -1,0 +1,7 @@
+tests/
+.pytest_cache/
+coverage/
+**/__pycache__/
+supabase/seed.sql
+docs/screenshots/
+
