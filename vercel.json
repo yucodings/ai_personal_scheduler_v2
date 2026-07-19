@@ -6,6 +6,9 @@
   },
   "rewrites": [
     { "source": "/api/health", "destination": "/api/index?_route=health" },
+    { "source": "/api/workspace", "destination": "/api/index?_route=workspace" },
+    { "source": "/api/services/status", "destination": "/api/index?_route=services/status" },
+    { "source": "/api/services/test", "destination": "/api/index?_route=services/test" },
     { "source": "/api/auth/login", "destination": "/api/index?_route=auth/login" },
     { "source": "/api/auth/logout", "destination": "/api/index?_route=auth/logout" },
     { "source": "/api/auth/session", "destination": "/api/index?_route=auth/session" },

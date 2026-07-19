@@ -18,6 +18,7 @@ from backend.auth_service import create_session, login_throttle, verify_password
 from backend.chat_service import ChatService
 from backend.config import get_settings
 from backend.document_service import DocumentService
+from backend.mimo_client import MimoClient
 from backend.project_service import ProjectService
 from backend.proposal_service import ProposalService
 from backend.reminder_service import ReminderService
@@ -54,6 +55,73 @@ def _health(_handler) -> Response:
             "telegram": not bool(settings.missing_for("telegram")),
         },
     }, None
+
+
+def _workspace_get(handler) -> Response:
+    require_session(handler)
+    db = SupabaseClient()
+    projects = db.table("projects", params={"select": "*", "order": "updated_at.desc"}) or []
+    tasks = db.table(
+        "tasks",
+        params={
+            "select": "*,task_dependencies!task_dependencies_dependent_task_id_fkey(predecessor_task_id)",
+            "order": "due_date.asc,sequence.asc",
+        },
+    ) or []
+    documents = db.table(
+        "project_documents", params={"select": "*", "order": "uploaded_at.desc"}
+    ) or []
+    proposals = db.table(
+        "ai_proposals", params={"select": "*", "order": "created_at.desc"}
+    ) or []
+    messages = db.table(
+        "ai_messages",
+        params={"select": "*", "channel": "eq.web", "order": "created_at.desc", "limit": 50},
+    ) or []
+    messages.reverse()
+    plans = db.table(
+        "daily_plans",
+        params={
+            "select": "*,daily_plan_items(*,tasks(id,title,project_id,projects(title)))",
+            "order": "plan_date.desc,created_at.desc",
+            "limit": 1,
+        },
+    ) or []
+    return 200, {
+        "projects": projects,
+        "tasks": tasks,
+        "documents": documents,
+        "proposals": proposals,
+        "messages": messages,
+        "daily_plan": plans[0] if plans else None,
+    }, {"Cache-Control": "no-store"}
+
+
+def _service_status(handler) -> Response:
+    require_session(handler)
+    settings = get_settings()
+    return 200, {
+        "supabase": {"configured": not settings.missing_for("supabase")},
+        "mimo": {"configured": not settings.missing_for("mimo")},
+        "telegram": {"configured": not settings.missing_for("telegram")},
+    }, {"Cache-Control": "no-store"}
+
+
+def _service_test(handler) -> Response:
+    require_session(handler)
+    service = str(read_json(handler).get("service", "")).lower()
+    if service == "supabase":
+        SupabaseClient().table("app_settings", params={"select": "id", "limit": 1})
+        return 200, {"service": service, "connected": True, "message": "Database connection verified."}, None
+    if service == "mimo":
+        connected = MimoClient().test_connection()
+        return 200, {"service": service, "connected": connected, "message": "MiMo model connection verified."}, None
+    if service == "telegram":
+        result = TelegramClient().test_connection()
+        if not result.ok:
+            raise ApiError(502, "TELEGRAM_TEST_FAILED", result.error or "Telegram test failed")
+        return 200, {"service": service, "connected": True, "message": "A test message was sent to the configured chat."}, None
+    raise ApiError(400, "UNKNOWN_SERVICE", "Service must be supabase, mimo, or telegram")
 
 
 def _auth_login(handler) -> Response:
@@ -282,6 +350,9 @@ def _reminders_evening(handler) -> Response:
 
 ROUTES: dict[str, dict[str, RouteAction]] = {
     "health": {"GET": _health},
+    "workspace": {"GET": _workspace_get},
+    "services/status": {"GET": _service_status},
+    "services/test": {"POST": _service_test},
     "auth/login": {"POST": _auth_login},
     "auth/logout": {"POST": _auth_logout},
     "auth/session": {"GET": _auth_session},

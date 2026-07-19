@@ -2,7 +2,7 @@
 
 Skyler is a private, single-user project and progress workspace for university work, competitions, hackathons, final-year projects, and personal goals. It turns project files into reviewable plans, tracks weighted progress against schedule, explains risk, and shares one project context across the web and Telegram.
 
-> Status: deployment-ready source and credential-free demo mode. External services are prepared but not connected in this repository.
+> Status: production-data application. Workspace state is loaded from Supabase and no sample records are injected by the frontend.
 
 ## Product flow
 
@@ -21,7 +21,7 @@ Login → create project → upload/scan evidence → AI analysis → review pro
 - Deterministic weighted progress, expected progress, variance, capacity, and risk.
 - Two-way Telegram commands, natural chat, inline progress/proposal buttons, and duplicate protection.
 - Supabase Cron SQL for 08:00 and 20:00 Asia/Kuala_Lumpur workflows.
-- Credential-free mock projects, tasks, OCR review, proposal review, Telegram previews, and AI chat.
+- Authenticated Supabase-backed projects, tasks, documents, proposals, Telegram workflows, and MiMo chat.
 
 ## Screenshots
 
@@ -52,7 +52,7 @@ copy .env.example .env.local
 npm run dev
 ```
 
-With `NEXT_PUBLIC_MOCK_MODE=true` in development, log in with `demo`. Never enable mock mode in production.
+Populate `.env.local`, run the Supabase migrations, and generate your password hash before signing in locally.
 
 ## Common commands
 
@@ -74,10 +74,9 @@ components/          reusable product and UI components
 lib/                 typed frontend data, validation, OCR, and API client
 api/                 plain Vercel Python function entrypoints
 backend/             reusable Python business logic and parsers
-supabase/            migrations, storage, cron, and optional seed SQL
-scripts/             secret, environment, Telegram, and seed utilities
+supabase/            migrations, private storage, and cron SQL
+scripts/             secret, environment, and Telegram utilities
 tests/               Python and frontend test suites
 ```
 
 Read [REFERENCE_REVIEW.md](REFERENCE_REVIEW.md), [ARCHITECTURE.md](ARCHITECTURE.md), [SETUP.md](SETUP.md), [DEPLOYMENT.md](DEPLOYMENT.md), and [FINAL_HANDOFF.md](FINAL_HANDOFF.md) next.
-

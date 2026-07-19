@@ -4,7 +4,7 @@
 
 1. Apply both migrations and `storage_setup.sql` from [SETUP.md](SETUP.md).
 2. Confirm `project-files` is private and no public URL exists.
-3. Use SQL Editor to call `search_project_documents` with a seeded project before production.
+3. After creating your first project and indexing a file, verify `search_project_documents` in SQL Editor.
 4. Keep the database and Vercel region close; this repository selects Vercel `sin1`.
 
 ## Vercel
@@ -12,7 +12,7 @@
 1. Push this new repository to GitHub; do not reuse or modify the reference repository.
 2. Import the GitHub repository into Vercel.
 3. Framework preset: Next.js. `vercel.json` registers plain Python functions and nested API rewrites.
-4. Add every required server environment value from `.env.example`; set `NEXT_PUBLIC_MOCK_MODE=false`.
+4. Add every required server environment value from `.env.example`.
 5. Deploy, then verify `/api/health`, password login, project CRUD, a private upload, project search, and a pending AI proposal.
 6. Confirm response cookies are `HttpOnly`, `Secure`, and `SameSite=Strict`.
 
@@ -42,7 +42,7 @@ Rollback by promoting the previous successful Vercel deployment. Database migrat
 
 ## Production verification
 
-- Mock mode false; no demo login.
+- An empty database produces an empty workspace; no sample records appear.
 - Health endpoint reports configured services without values.
 - Wrong password cooldown works; expired/forged sessions fail.
 - Service role and bot token do not appear in browser bundles or responses.
@@ -52,4 +52,3 @@ Rollback by promoting the previous successful Vercel deployment. Database migrat
 - Full and partial approvals create one copy of each approved entity.
 - Telegram rejects wrong secret/chat and ignores duplicate update IDs.
 - Morning/evening jobs stay under daily capacity and log outcomes.
-

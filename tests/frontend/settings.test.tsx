@@ -1,13 +1,19 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { expect, it } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
 import SettingsPage from "@/app/(workspace)/settings/page";
+import { apiClient } from "@/lib/api-client";
 
-it("switches approval modes and keeps secrets hidden", async () => {
-  const user = userEvent.setup(); render(<SettingsPage />);
+afterEach(() => vi.restoreAllMocks());
+
+it("shows real configuration state while keeping secret values hidden", async () => {
+  vi.spyOn(apiClient, "serviceStatus").mockResolvedValue({ supabase: { configured: true }, mimo: { configured: true }, telegram: { configured: true } });
+  const user = userEvent.setup();
+  render(<SettingsPage />);
   await user.click(screen.getByRole("button", { name: /Milestone by milestone/ }));
   expect(screen.getByRole("button", { name: /Milestone by milestone/ })).toHaveClass("border-sky-400");
-  expect(screen.getByText("Webhook secret")).toBeInTheDocument();
+  expect(await screen.findAllByText("Configured")).toHaveLength(3);
+  expect(screen.getByText("TELEGRAM_WEBHOOK_SECRET")).toBeInTheDocument();
   expect(screen.queryByText(/bot\d+:/i)).not.toBeInTheDocument();
+  expect(screen.queryByText(/mock verified/i)).not.toBeInTheDocument();
 });
-

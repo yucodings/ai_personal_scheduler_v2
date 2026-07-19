@@ -2,14 +2,14 @@
 
 ## Implemented
 
-- Foundation: Next.js App Router, Tailwind UI, Python Vercel functions, environment validation, Argon2/JWT auth, mock mode.
+- Foundation: Next.js App Router, Tailwind UI, consolidated Python Vercel API, environment validation, Argon2/JWT auth, and Supabase-backed workspace state.
 - Projects: project/milestone/task/subtask/dependency model, project portfolio, task updates, manual progress override.
 - Documents: private upload contract, lightweight parsers, browser image/PDF OCR correction, safe ZIP inspection, chunking/full-text retrieval.
 - AI: environment-configured MiMo client, retry/repair, bounded context, strict envelopes, citations, full and milestone proposal approval.
 - Progress: weighted/expected/displayed calculations, deterministic risk, dependency-aware daily planning.
 - Telegram: allowed-chat webhook, secret validation, commands, natural chat, callbacks, idempotency, shared project context.
 - Scheduling: persisted morning plan, evening check, Telegram previews, authenticated endpoints, idempotent Supabase Cron SQL.
-- Operations: migrations, private storage setup, seed, secret/environment/webhook scripts, tests, and deployment guides.
+- Operations: migrations, private storage setup, secret/environment/webhook scripts, tests, and deployment guides.
 
 ## Deployment status
 
@@ -20,7 +20,7 @@
 
 ## Verification completed locally
 
-- Python: 15 tests passed.
+- Python: 19 tests passed.
 - Frontend: 8 tests passed across login, project creation/filtering, task progress, manual override, OCR correction, proposal approval, and approval-mode switching.
 - Python bytecode compilation: passed for `api`, `backend`, and `scripts`.
 - TypeScript: passed with `tsc --noEmit`.
@@ -33,7 +33,7 @@
 1. Create the Supabase project and run the migrations plus storage setup.
 2. Run `scripts/generate_secrets.py` and add environment values locally/Vercel.
 3. Push this repository to a new GitHub repository and import it into Vercel.
-4. Deploy with mock mode false and complete the production checks.
+4. Deploy and complete the production checks.
 5. Create/configure the Telegram bot and run `scripts/set_telegram_webhook.py`.
 6. Store the app URL and cron secret in Vault, then run `supabase/cron_setup.sql`.
 
@@ -55,8 +55,7 @@ Defaults already supplied: timezone, MiMo base URL/model, storage bucket, parsin
 
 ## Known limitations
 
-- Mock state is intentionally in-memory and resets on refresh; production state is Supabase-backed.
-- Browser OCR is English-first and limits the scanned-PDF demo to eight pages to protect device performance.
+- Browser OCR is English-first and limits scanned-PDF processing to protect device performance.
 - Critical-path analysis detects dependency blockers/cycles but does not yet optimise a full resource-constrained CPM schedule.
 - ZIP analysis reads only safe text/source formats and truncates large source files; it never executes code.
 - External connections cannot be claimed until the credentialed production verification is complete.

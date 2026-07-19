@@ -16,7 +16,7 @@ python -m venv .venv
 Copy-Item .env.example .env.local
 ```
 
-Keep `NEXT_PUBLIC_MOCK_MODE=true` for credential-free UI testing. Run `npm run dev`, open `http://localhost:3000`, and use password `demo`. Mock mode is rejected as a production strategy: set it to `false` in Vercel.
+Complete the environment and Supabase steps below before running the app. The frontend does not inject sample projects or accept a shared demonstration password.
 
 ## 2. Generate application secrets
 
@@ -36,8 +36,6 @@ In Supabase SQL Editor, run in order:
 
 The migrations create UUID keys, constraints, indexes, update triggers, full-text search, atomic proposal approval, progress history/recalculation, Telegram idempotency, and deny direct anonymous/authenticated table access. The `project-files` bucket is private.
 
-Optionally run `supabase/seed.sql` only in a non-production project.
-
 ## 4. Complete `.env.local`
 
 Use `.env.example` as the source of truth. `SUPABASE_SERVICE_ROLE_KEY` is server-only; never prefix it with `NEXT_PUBLIC_`. Validate names without exposing values:
@@ -52,7 +50,7 @@ Use `.env.example` as the source of truth. `SUPABASE_SERVICE_ROLE_KEY` is server
 npm run dev
 ```
 
-Vercel’s local CLI can emulate the mixed Next.js/Python deployment more closely if installed: `vercel dev`. Plain `next dev` runs the mock UI; the Python functions are production/Vercel entrypoints.
+Use `vercel dev` for local testing because it runs both the Next.js frontend and consolidated Python API function.
 
 ## OCR notes
 
@@ -60,4 +58,3 @@ Vercel’s local CLI can emulate the mixed Next.js/Python deployment more closel
 - PDFs can be rendered by PDF.js and OCR’d page by page when scanned.
 - English is configured first. Add trained languages via `OCR_LANGUAGES` and the adapter later.
 - Original images/PDFs are uploaded privately; MiMo receives extracted text, never raw images.
-
