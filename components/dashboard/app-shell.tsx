@@ -2,13 +2,13 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { Bot, CalendarDays, CheckCircle2, ChevronDown, FolderKanban, LayoutDashboard, LogOut, Menu, MessageSquareText, Settings, Sparkles, X } from "lucide-react";
+import { Archive, Bot, CalendarDays, CheckCircle2, ChevronDown, FolderKanban, LayoutDashboard, LogOut, Menu, MessageSquareText, Settings, Sparkles, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiClient } from "@/lib/api-client";
 import { useApp } from "@/components/providers/app-provider";
 import { Button } from "@/components/ui/button";
 
-const items = [{ href: "/dashboard", label: "Overview", icon: LayoutDashboard }, { href: "/projects", label: "Projects", icon: FolderKanban }, { href: "/daily-plan", label: "Daily plan", icon: CheckCircle2 }, { href: "/calendar", label: "Timeline", icon: CalendarDays }, { href: "/assistant", label: "Ask Skyler", icon: MessageSquareText }];
+const items = [{ href: "/dashboard", label: "Overview", icon: LayoutDashboard }, { href: "/projects", label: "Projects", icon: FolderKanban }, { href: "/archived", label: "Archived", icon: Archive }, { href: "/daily-plan", label: "Daily plan", icon: CheckCircle2 }, { href: "/calendar", label: "Timeline", icon: CalendarDays }, { href: "/assistant", label: "Ask Skyler", icon: MessageSquareText }];
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname(); const router = useRouter(); const [open, setOpen] = useState(false); const { activeProject, projects, setActiveProject } = useApp();
   async function logout() { try { await apiClient.logout(); } finally { router.push("/login"); router.refresh(); } }

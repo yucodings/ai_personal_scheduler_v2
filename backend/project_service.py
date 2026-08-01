@@ -24,12 +24,12 @@ class ProjectService:
         return rows[0]
 
     def update(self, project_id: str, changes: dict[str, Any]) -> dict[str, Any]:
-        allowed = {"title", "description", "status", "priority", "start_date", "final_deadline", "internal_deadline", "estimated_total_hours", "manual_progress", "is_active_context"}
+        allowed = {"title", "project_type", "description", "status", "priority", "start_date", "final_deadline", "internal_deadline", "estimated_total_hours", "manual_progress", "is_active_context"}
         payload = {key: value for key, value in changes.items() if key in allowed}
         if not payload: raise ValueError("No supported fields supplied")
+        if payload.get("status") == "archived": payload["is_active_context"] = False
         if payload.get("is_active_context") is True: self.db.rpc("set_active_project", {"p_project_id": project_id})
         rows = self.db.table("projects", method="PATCH", params={"id": f"eq.{project_id}"}, data=payload, prefer="return=representation")
         if not rows: raise ValueError("Project not found")
         return rows[0]
-
 

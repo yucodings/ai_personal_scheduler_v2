@@ -6,7 +6,7 @@ Skyler is a private, single-user project and progress workspace for university w
 
 ## Product flow
 
-Login → create project → upload/scan evidence → AI analysis → review proposal → work on tasks → update progress → risk recalculation → morning plan → evening check.
+Login → create or edit a project → add tasks manually and/or upload evidence for AI planning → review AI proposals → work on tasks → update progress → risk recalculation → morning plan → evening check → archive completed work → restore it later if needed.
 
 ## Highlights
 
@@ -14,6 +14,7 @@ Login → create project → upload/scan evidence → AI analysis → review pro
 - Plain Vercel Python functions with shared framework-free Python business logic.
 - Argon2 password, signed expiring sessions, HttpOnly/Strict cookies, and login cooldown.
 - Full project/milestone/task/subtask/dependency/progress hierarchy.
+- Editable project details, manual task creation, and a separate restorable project archive.
 - PDF, DOCX, PPTX, XLSX, CSV, text, Markdown, JSON, images, and safe ZIP support.
 - Browser Tesseract OCR with editable output; scanned-PDF page OCR fallback.
 - Direct Skyler chat attachments with OCR/extraction, private indexing, and source-grounded answers.

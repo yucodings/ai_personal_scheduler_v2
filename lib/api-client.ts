@@ -30,6 +30,18 @@ export interface ProjectCreateInput {
   estimatedTotalHours: number;
 }
 
+export interface TaskCreateInput {
+  projectId: string;
+  title: string;
+  description: string;
+  priority: Priority;
+  estimatedHours: number;
+  effortWeight: number;
+  plannedStart?: string;
+  dueDate?: string;
+  sequence: number;
+}
+
 export interface WorkspaceData {
   projects: Project[];
   tasks: Task[];
@@ -258,6 +270,7 @@ function projectChanges(changes: Partial<Project>): Row {
   const payload: Row = {};
   const mapping: Partial<Record<keyof Project, string>> = {
     title: "title",
+    projectType: "project_type",
     description: "description",
     status: "status",
     priority: "priority",
@@ -272,6 +285,26 @@ function projectChanges(changes: Partial<Project>): Row {
     if (key in changes && apiKey) payload[apiKey] = changes[key as keyof Project] ?? null;
   }
   return payload;
+}
+
+function taskPayload(input: TaskCreateInput): Row {
+  return {
+    project_id: input.projectId,
+    milestone_id: null,
+    parent_task_id: null,
+    title: input.title,
+    description: input.description,
+    status: "not_started",
+    progress_percent: 0,
+    priority: input.priority,
+    effort_weight: input.effortWeight,
+    estimated_hours: input.estimatedHours,
+    actual_hours: 0,
+    planned_start: input.plannedStart || null,
+    due_date: input.dueDate || null,
+    blocked_reason: null,
+    sequence: input.sequence,
+  };
 }
 
 function fileBase64(file: File): Promise<string> {
@@ -290,6 +323,7 @@ export const apiClient = {
   workspace: async () => workspaceFromApi(await request<unknown>("/api/workspace")),
   createProject: async (input: ProjectCreateInput) => projectFromApi(await request<unknown>("/api/projects", { method: "POST", body: JSON.stringify(projectPayload(input)) })),
   updateProject: async (id: string, changes: Partial<Project>) => projectFromApi(await request<unknown>(`/api/project?id=${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(projectChanges(changes)) })),
+  createTask: async (input: TaskCreateInput) => taskFromApi(await request<unknown>("/api/tasks", { method: "POST", body: JSON.stringify(taskPayload(input)) })),
   updateTaskProgress: (taskId: string, status: TaskStatus, progressPercent: number, note?: string) => request<unknown>("/api/progress", { method: "POST", body: JSON.stringify({ task_id: taskId, status, progress_percent: progressPercent, actual_hours_added: 0, note: note || null, source: "web" }) }),
   uploadDocument: async (projectId: string, file: File) => documentFromApi(await request<unknown>("/api/documents/upload", { method: "POST", body: JSON.stringify({ project_id: projectId, filename: file.name, mime_type: file.type || "application/octet-stream", content_base64: await fileBase64(file) }) })),
   finalizeDocument: async (documentId: string, projectId: string, text: string, method: string, confidence?: number) => documentFromApi(await request<unknown>("/api/documents/finalize", { method: "POST", body: JSON.stringify({ document_id: documentId, project_id: projectId, extracted_text: text, extraction_method: method, ocr_confidence: confidence ?? null }) })),

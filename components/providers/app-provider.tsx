@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { apiClient, type ProjectCreateInput, type WorkspaceData } from "@/lib/api-client";
+import { apiClient, type ProjectCreateInput, type TaskCreateInput, type WorkspaceData } from "@/lib/api-client";
 import type { AiProposal, ChatMessage, DailyPlan, DocumentRecord, Project, Task } from "@/lib/types";
 
 interface AppState {
@@ -17,7 +17,10 @@ interface AppState {
   refresh(): Promise<void>;
   setActiveProject(id: string): Promise<void>;
   addProject(input: ProjectCreateInput): Promise<Project>;
+  editProject(id: string, changes: Partial<Project>): Promise<Project>;
   archiveProject(id: string): Promise<void>;
+  restoreProject(id: string): Promise<void>;
+  addTask(input: TaskCreateInput): Promise<Task>;
   updateTask(id: string, progress: number, status?: Task["status"], blocker?: string): Promise<void>;
   setManualProgress(projectId: string, value: number | null): Promise<void>;
   addDocument(record: DocumentRecord): void;
@@ -81,7 +84,8 @@ export function AppProvider({
     if (loadOnMount && !initialData) void refresh();
   }, [initialData, loadOnMount, refresh]);
 
-  const activeProject = projects.find((project) => project.isActiveContext) ?? projects[0];
+  const activeProject = projects.find((project) => project.isActiveContext && project.status !== "archived")
+    ?? projects.find((project) => project.status !== "archived");
 
   async function setActiveProject(id: string) {
     const updated = await apiClient.updateProject(id, { isActiveContext: true });
@@ -97,9 +101,36 @@ export function AppProvider({
     return project;
   }
 
+  async function editProject(id: string, changes: Partial<Project>) {
+    const updated = await apiClient.updateProject(id, changes);
+    setProjects((current) => current.map((project) => project.id === id ? updated : project));
+    return updated;
+  }
+
   async function archiveProject(id: string) {
+    const wasActive = projects.some((project) => project.id === id && project.isActiveContext);
+    const replacement = projects.find((project) => project.id !== id && project.status !== "archived");
     const updated = await apiClient.updateProject(id, { status: "archived" });
     setProjects((current) => current.map((project) => project.id === id ? updated : project));
+    if (wasActive && replacement) {
+      const activated = await apiClient.updateProject(replacement.id, { isActiveContext: true });
+      setProjects((current) => current.map((project) => ({
+        ...project,
+        isActiveContext: project.id === activated.id,
+      })));
+    }
+  }
+
+  async function restoreProject(id: string) {
+    const updated = await apiClient.updateProject(id, { status: "active" });
+    setProjects((current) => current.map((project) => project.id === id ? updated : project));
+  }
+
+  async function addTask(input: TaskCreateInput) {
+    const task = await apiClient.createTask(input);
+    setTasks((current) => [...current, task]);
+    await refresh();
+    return task;
   }
 
   async function updateTask(id: string, progress: number, status?: Task["status"], blocker?: string) {
@@ -179,7 +210,10 @@ export function AppProvider({
     refresh,
     setActiveProject,
     addProject,
+    editProject,
     archiveProject,
+    restoreProject,
+    addTask,
     updateTask,
     setManualProgress,
     addDocument,
