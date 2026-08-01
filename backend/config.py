@@ -27,6 +27,7 @@ class Settings:
     deepseek_timeout_seconds: int = 60
     deepseek_max_context_chars: int = 40000
     deepseek_max_tokens: int = 8192
+    chat_retention_days: int = 7
     mimo_api_key: str = ""
     mimo_base_url: str = "https://token-plan-sgp.xiaomimimo.com/v1"
     mimo_model: str = "mimo-v2.5"
@@ -82,6 +83,7 @@ class Settings:
             deepseek_timeout_seconds=_integer("DEEPSEEK_TIMEOUT_SECONDS", 60),
             deepseek_max_context_chars=_integer("DEEPSEEK_MAX_CONTEXT_CHARS", 40000),
             deepseek_max_tokens=_integer("DEEPSEEK_MAX_TOKENS", 8192),
+            chat_retention_days=_integer("CHAT_RETENTION_DAYS", 7),
             mimo_api_key=os.getenv("MIMO_API_KEY", ""),
             mimo_base_url=os.getenv("MIMO_BASE_URL", "https://token-plan-sgp.xiaomimimo.com/v1").rstrip("/"),
             mimo_model=os.getenv("MIMO_MODEL", "mimo-v2.5"),

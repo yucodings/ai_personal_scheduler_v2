@@ -41,6 +41,8 @@ The migrations create UUID keys, constraints, indexes, update triggers, full-tex
 
 Use `.env.example` as the source of truth. Set `AI_PROVIDER=deepseek` and add `DEEPSEEK_API_KEY`; the existing MiMo variables can remain and are used only when `AI_PROVIDER=mimo`. Prefer `SUPABASE_SECRET_KEY` with the current `sb_secret_...` key from Supabase. `SUPABASE_SERVICE_ROLE_KEY` remains a legacy fallback. All API keys are server-only; never prefix them with `NEXT_PUBLIC_`. Validate names without exposing values:
 
+`CHAT_RETENTION_DAYS=7` removes older Skyler messages and inactive conversations whenever the workspace or chat API is used. Recent history remains available across devices until it expires.
+
 ```powershell
 .venv\Scripts\python scripts\verify_environment.py
 ```

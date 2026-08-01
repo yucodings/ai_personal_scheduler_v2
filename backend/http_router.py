@@ -16,7 +16,7 @@ from backend.api import (
     require_telegram_secret,
 )
 from backend.auth_service import create_session, login_throttle, verify_password
-from backend.chat_service import ChatService
+from backend.chat_service import ChatService, purge_expired_chat_history
 from backend.config import get_settings
 from backend.document_service import DocumentService
 from backend.deepseek_client import DeepSeekClient
@@ -73,6 +73,7 @@ def _health(_handler) -> Response:
 def _workspace_get(handler) -> Response:
     require_session(handler)
     db = SupabaseClient()
+    cutoff = purge_expired_chat_history(db)
     projects = db.table("projects", params={"select": "*", "order": "updated_at.desc"}) or []
     tasks = db.table(
         "tasks",
@@ -89,7 +90,13 @@ def _workspace_get(handler) -> Response:
     ) or []
     messages = db.table(
         "ai_messages",
-        params={"select": "*", "channel": "eq.web", "order": "created_at.desc", "limit": 50},
+        params={
+            "select": "*",
+            "channel": "eq.web",
+            "created_at": f"gte.{cutoff}",
+            "order": "created_at.desc",
+            "limit": 50,
+        },
     ) or []
     messages.reverse()
     plans = db.table(

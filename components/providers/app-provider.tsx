@@ -149,7 +149,7 @@ export function AppProvider({
         proposalId: response.proposal_id ? String(response.proposal_id) : undefined,
         createdAt: new Date().toISOString(),
       }]);
-      if (response.proposal_id) await refresh();
+      if (response.proposal_id || response.workspace_changed) await refresh();
     } catch (cause) {
       setMessages((current) => [...current, {
         id: crypto.randomUUID(),
