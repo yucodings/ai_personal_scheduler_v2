@@ -38,7 +38,7 @@ The migrations create UUID keys, constraints, indexes, update triggers, full-tex
 
 ## 4. Complete `.env.local`
 
-Use `.env.example` as the source of truth. `SUPABASE_SERVICE_ROLE_KEY` is server-only; never prefix it with `NEXT_PUBLIC_`. Validate names without exposing values:
+Use `.env.example` as the source of truth. Prefer `SUPABASE_SECRET_KEY` with the current `sb_secret_...` key from Supabase. `SUPABASE_SERVICE_ROLE_KEY` remains a legacy fallback. Both are server-only; never prefix either with `NEXT_PUBLIC_`. Validate names without exposing values:
 
 ```powershell
 .venv\Scripts\python scripts\verify_environment.py

@@ -9,7 +9,7 @@ import { Input, Label, Select } from "@/components/ui/field";
 import { apiClient, type ServiceName, type ServiceStatus } from "@/lib/api-client";
 
 const services: { name: ServiceName; title: string; detail: string; variables: string[]; icon: typeof Database }[] = [
-  { name: "supabase", title: "Supabase", detail: "Database + private storage", variables: ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"], icon: Database },
+  { name: "supabase", title: "Supabase", detail: "Database + private storage", variables: ["SUPABASE_URL", "SUPABASE_SECRET_KEY (preferred) or SUPABASE_SERVICE_ROLE_KEY (legacy)"], icon: Database },
   { name: "mimo", title: "Xiaomi MiMo", detail: "Structured planning + chat", variables: ["MIMO_API_KEY"], icon: Bot },
   { name: "telegram", title: "Telegram", detail: "Webhook + daily workflows", variables: ["TELEGRAM_BOT_TOKEN", "TELEGRAM_ALLOWED_CHAT_ID", "TELEGRAM_WEBHOOK_SECRET"], icon: Send },
 ];

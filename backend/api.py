@@ -13,6 +13,7 @@ from pydantic import ValidationError
 from backend.auth_service import verify_session
 from backend.config import ConfigurationError, get_settings
 from backend.logging_utils import safe_log
+from backend.supabase_client import SupabaseError
 
 
 class ApiError(Exception):
@@ -88,6 +89,33 @@ def parse_pagination(handler, default_limit: int = 25, max_limit: int = 100) -> 
     return limit, offset
 
 
+def describe_supabase_error(error: SupabaseError) -> tuple[str, str]:
+    provider_code = error.provider_code.upper()
+    message = str(error).lower()
+    schema_codes = {"PGRST200", "PGRST202", "PGRST205", "42P01", "42703", "42883"}
+    if provider_code in schema_codes or "schema cache" in message or "does not exist" in message:
+        return (
+            "SUPABASE_SCHEMA_MISSING",
+            "Supabase is connected, but the Skyler database schema is missing or outdated. "
+            "Run the two SQL migrations in supabase/migrations, then run supabase/storage_setup.sql.",
+        )
+    if error.status in {401, 403} or "invalid jwt" in message or "api key" in message:
+        return (
+            "SUPABASE_CREDENTIALS_REJECTED",
+            "Supabase rejected the server credential. In Vercel, set SUPABASE_SECRET_KEY "
+            "to an sb_secret_ key, or SUPABASE_SERVICE_ROLE_KEY to the legacy service_role JWT, then redeploy.",
+        )
+    if provider_code == "NETWORK_ERROR":
+        return (
+            "SUPABASE_UNREACHABLE",
+            "Supabase could not be reached. Check SUPABASE_URL and the Supabase project status, then retry.",
+        )
+    return (
+        "SUPABASE_REQUEST_FAILED",
+        "Supabase could not complete the database request. Check the Vercel function logs using the request ID.",
+    )
+
+
 def dispatch(handler, allowed_methods: set[str], action: Callable[[str], tuple[int, Any, dict[str, str] | None]]) -> None:
     request_id = str(uuid.uuid4())
     method = handler.command.upper()
@@ -104,6 +132,15 @@ def dispatch(handler, allowed_methods: set[str], action: Callable[[str], tuple[i
         status = 422; body = json.dumps(envelope(error={"code": "VALIDATION_ERROR", "message": exc.errors(include_url=False)[0]["msg"]}, request_id=request_id)).encode()
     except ConfigurationError as exc:
         status = 503; body = json.dumps(envelope(error={"code": "NOT_CONFIGURED", "message": str(exc)}, request_id=request_id)).encode()
+    except SupabaseError as exc:
+        code, message = describe_supabase_error(exc)
+        safe_log(
+            "supabase_api_error",
+            request_id=request_id,
+            provider_status=exc.status,
+            provider_code=exc.provider_code or "unknown",
+        )
+        status = 503; body = json.dumps(envelope(error={"code": code, "message": message}, request_id=request_id)).encode()
     except ApiError as exc:
         status = exc.status; body = json.dumps(envelope(error={"code": exc.code, "message": exc.message}, request_id=request_id)).encode()
     except Exception as exc:
@@ -112,4 +149,3 @@ def dispatch(handler, allowed_methods: set[str], action: Callable[[str], tuple[i
     if not getattr(handler, "_headers_buffer", None):
         handler.send_response(status); handler.send_header("Content-Type", "application/json; charset=utf-8"); handler.send_header("X-Request-ID", request_id)
     handler.send_header("Content-Length", str(len(body))); handler.end_headers(); handler.wfile.write(body)
-

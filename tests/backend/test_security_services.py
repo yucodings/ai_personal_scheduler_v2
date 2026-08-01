@@ -2,10 +2,11 @@ import hmac
 
 import pytest
 
-from backend.api import ApiError, require_bearer
+from backend.api import ApiError, describe_supabase_error, require_bearer
 from backend.config import ConfigurationError, Settings
 from backend.schemas import DependencyInput, TaskInput
 from backend.proposal_service import ProposalService
+from backend.supabase_client import SupabaseClient, SupabaseError
 from backend.telegram_service import TelegramService
 
 
@@ -24,6 +25,39 @@ def test_environment_validation_does_not_print_values():
     with pytest.raises(ConfigurationError) as error: settings.require("supabase")
     assert "SUPABASE_URL" in str(error.value)
     assert "private-key" not in str(error.value)
+
+
+def test_current_supabase_secret_key_is_not_sent_as_a_bearer_jwt():
+    settings = Settings(
+        supabase_url="https://example.supabase.co",
+        supabase_service_role_key="sb_secret_current",
+    )
+    client = SupabaseClient(settings)
+    assert client.headers["apikey"] == "sb_secret_current"
+    assert "Authorization" not in client.headers
+
+
+def test_legacy_supabase_service_role_key_keeps_bearer_header():
+    settings = Settings(
+        supabase_url="https://example.supabase.co",
+        supabase_service_role_key="legacy.jwt.value",
+    )
+    client = SupabaseClient(settings)
+    assert client.headers["Authorization"] == "Bearer legacy.jwt.value"
+
+
+def test_supabase_failures_produce_safe_actionable_messages():
+    schema_code, schema_message = describe_supabase_error(
+        SupabaseError("Could not find the table public.projects in the schema cache", 404, "PGRST205")
+    )
+    credential_code, credential_message = describe_supabase_error(
+        SupabaseError("Invalid JWT", 401, "PGRST301")
+    )
+
+    assert schema_code == "SUPABASE_SCHEMA_MISSING"
+    assert "SQL migrations" in schema_message
+    assert credential_code == "SUPABASE_CREDENTIALS_REJECTED"
+    assert "SUPABASE_SECRET_KEY" in credential_message
 
 
 def test_task_and_dependency_schema_guards():

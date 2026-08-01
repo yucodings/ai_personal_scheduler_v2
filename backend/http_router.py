@@ -7,6 +7,7 @@ from urllib.parse import parse_qs, urlparse
 
 from backend.api import (
     ApiError,
+    describe_supabase_error,
     dispatch,
     parse_pagination,
     read_json,
@@ -34,7 +35,7 @@ from backend.schemas import (
     TaskInput,
     TaskProgressInput,
 )
-from backend.supabase_client import SupabaseClient
+from backend.supabase_client import SupabaseClient, SupabaseError
 from backend.task_service import TaskService
 from backend.telegram_client import TelegramClient
 from backend.telegram_service import TelegramService
@@ -47,14 +48,23 @@ ANALYSIS_REQUEST = """Analyse the project evidence. Identify project type, final
 
 def _health(_handler) -> Response:
     settings = get_settings()
-    return 200, {
+    response: dict[str, Any] = {
         "status": "ok",
         "services": {
             "supabase": not bool(settings.missing_for("supabase")),
             "mimo": not bool(settings.missing_for("mimo")),
             "telegram": not bool(settings.missing_for("telegram")),
         },
-    }, None
+    }
+    query = parse_qs(urlparse(_handler.path).query)
+    if query.get("deep", [""])[0] == "1" and response["services"]["supabase"]:
+        try:
+            SupabaseClient().table("app_settings", params={"select": "id", "limit": 1})
+            response["supabase_readiness"] = {"ready": True}
+        except SupabaseError as exc:
+            code, _ = describe_supabase_error(exc)
+            response["supabase_readiness"] = {"ready": False, "code": code}
+    return 200, response, {"Cache-Control": "no-store"}
 
 
 def _workspace_get(handler) -> Response:
@@ -81,19 +91,37 @@ def _workspace_get(handler) -> Response:
     messages.reverse()
     plans = db.table(
         "daily_plans",
-        params={
-            "select": "*,daily_plan_items(*,tasks(id,title,project_id,projects(title)))",
-            "order": "plan_date.desc,created_at.desc",
-            "limit": 1,
-        },
+        params={"select": "*", "order": "plan_date.desc,created_at.desc", "limit": 1},
     ) or []
+    daily_plan = plans[0] if plans else None
+    if daily_plan:
+        plan_items = db.table(
+            "daily_plan_items",
+            params={
+                "select": "*",
+                "daily_plan_id": f"eq.{daily_plan['id']}",
+                "order": "ordering.asc",
+            },
+        ) or []
+        tasks_by_id = {str(task.get("id")): task for task in tasks}
+        projects_by_id = {str(project.get("id")): project for project in projects}
+        for item in plan_items:
+            task = tasks_by_id.get(str(item.get("task_id")), {})
+            project = projects_by_id.get(str(task.get("project_id")), {})
+            item["tasks"] = {
+                "id": task.get("id"),
+                "title": task.get("title"),
+                "project_id": task.get("project_id"),
+                "projects": {"title": project.get("title")},
+            }
+        daily_plan["daily_plan_items"] = plan_items
     return 200, {
         "projects": projects,
         "tasks": tasks,
         "documents": documents,
         "proposals": proposals,
         "messages": messages,
-        "daily_plan": plans[0] if plans else None,
+        "daily_plan": daily_plan,
     }, {"Cache-Control": "no-store"}
 
 

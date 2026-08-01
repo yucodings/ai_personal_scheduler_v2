@@ -55,7 +55,10 @@ class Settings:
             cron_secret=os.getenv("CRON_SECRET", ""),
             supabase_url=os.getenv("SUPABASE_URL", "").rstrip("/"),
             supabase_publishable_key=os.getenv("SUPABASE_PUBLISHABLE_KEY", ""),
-            supabase_service_role_key=os.getenv("SUPABASE_SERVICE_ROLE_KEY", ""),
+            supabase_service_role_key=(
+                os.getenv("SUPABASE_SECRET_KEY", "").strip()
+                or os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+            ),
             storage_bucket=os.getenv("SUPABASE_STORAGE_BUCKET", "project-files"),
             mimo_api_key=os.getenv("MIMO_API_KEY", ""),
             mimo_base_url=os.getenv("MIMO_BASE_URL", "https://token-plan-sgp.xiaomimimo.com/v1").rstrip("/"),
@@ -78,7 +81,10 @@ class Settings:
     def missing_for(self, capability: str) -> list[str]:
         requirements = {
             "auth": {"APP_LOGIN_PASSWORD_HASH": self.app_login_password_hash, "JWT_SECRET": self.jwt_secret},
-            "supabase": {"SUPABASE_URL": self.supabase_url, "SUPABASE_SERVICE_ROLE_KEY": self.supabase_service_role_key},
+            "supabase": {
+                "SUPABASE_URL": self.supabase_url,
+                "SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY": self.supabase_service_role_key,
+            },
             "mimo": {"MIMO_API_KEY": self.mimo_api_key},
             "telegram": {"TELEGRAM_BOT_TOKEN": self.telegram_bot_token, "TELEGRAM_ALLOWED_CHAT_ID": self.telegram_allowed_chat_id},
             "cron": {"CRON_SECRET": self.cron_secret},
@@ -108,4 +114,3 @@ def _number(name: str, default: float) -> float:
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
     return Settings.from_env()
-
