@@ -5,7 +5,7 @@
 - Foundation: Next.js App Router, Tailwind UI, consolidated Python Vercel API, environment validation, Argon2/JWT auth, and Supabase-backed workspace state.
 - Projects: project/milestone/task/subtask/dependency model, project portfolio, task updates, manual progress override.
 - Documents: private upload contract, lightweight parsers, browser image/PDF OCR correction, safe ZIP inspection, chunking/full-text retrieval.
-- AI: environment-configured MiMo client, retry/repair, bounded context, strict envelopes, citations, full and milestone proposal approval.
+- AI: environment-selected DeepSeek/MiMo client, retry/repair, bounded context, strict envelopes, citations, full and milestone proposal approval.
 - Progress: weighted/expected/displayed calculations, deterministic risk, dependency-aware daily planning.
 - Telegram: allowed-chat webhook, secret validation, commands, natural chat, callbacks, idempotency, shared project context.
 - Scheduling: persisted morning plan, evening check, Telegram previews, authenticated endpoints, idempotent Supabase Cron SQL.
@@ -16,7 +16,8 @@
 - Supabase migrations: prepared, not applied (no project credentials supplied).
 - Vercel: configured, not deployed (no Vercel project authorization supplied).
 - Telegram webhook: implemented, not registered (no token or production URL supplied).
-- Xiaomi MiMo: implemented, not connection-tested (no API key supplied).
+- DeepSeek: primary provider implementation; requires `DEEPSEEK_API_KEY` in Vercel.
+- Xiaomi MiMo: retained as an alternative provider.
 
 ## Verification completed locally
 
@@ -45,13 +46,15 @@
 - `SUPABASE_URL`
 - `SUPABASE_PUBLISHABLE_KEY`
 - `SUPABASE_SECRET_KEY` (preferred `sb_secret_...`) or `SUPABASE_SERVICE_ROLE_KEY` (legacy)
+- `AI_PROVIDER` (`deepseek` by default, or `mimo`)
+- `DEEPSEEK_API_KEY`
 - `MIMO_API_KEY`
 - `TELEGRAM_BOT_TOKEN`
 - `TELEGRAM_ALLOWED_CHAT_ID`
 - `TELEGRAM_WEBHOOK_SECRET`
 - Production `NEXT_PUBLIC_APP_URL`
 
-Defaults already supplied: timezone, MiMo base URL/model, storage bucket, parsing limits, work-hour limit, and approval mode.
+Defaults already supplied: timezone, DeepSeek and MiMo base URLs/models, storage bucket, parsing limits, work-hour limit, and approval mode.
 
 ## Known limitations
 

@@ -4,7 +4,6 @@ from datetime import date
 from typing import Any
 
 from backend.config import get_settings
-from backend.mimo_client import MimoClient
 from backend.planning_engine import allocate_daily_plan
 from backend.supabase_client import SupabaseClient
 from backend.telegram_client import TelegramClient, escape_telegram, status_keyboard
@@ -41,4 +40,3 @@ class ReminderService:
     def _risk_count(self): return len(self.db.table("projects", params={"select": "id", "risk_status": "in.(at_risk,delayed,blocked)"}) or [])
     def _risk_summary(self): return f"{self._risk_count()} project(s) need attention."
     def _log(self, kind: str, success: bool, error: str | None): self.db.table("notification_logs", method="POST", data={"channel": "telegram", "notification_type": kind, "status": "sent" if success else "failed", "error_message": error})
-

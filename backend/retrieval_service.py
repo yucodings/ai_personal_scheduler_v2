@@ -48,10 +48,9 @@ def build_context(chunks: list[RetrievedChunk], settings: Settings | None = None
     config = settings or get_settings(); pieces: list[str] = []; citations: list[dict[str, Any]] = []; used = 0
     for chunk in chunks:
         heading = f"[Source: {chunk.filename} — {chunk.reference}]\n"
-        available = config.mimo_max_context_chars - used - len(heading)
+        available = config.ai_max_context_chars - used - len(heading)
         if available <= 0:
             break
         content = chunk.content[:available]; pieces.append(heading + content); used += len(heading) + len(content)
         citations.append({"document_id": chunk.document_id, "filename": chunk.filename, "reference": chunk.reference, "chunk_id": chunk.chunk_id})
     return "\n\n".join(pieces), citations
-

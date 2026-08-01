@@ -3,15 +3,16 @@ from __future__ import annotations
 from typing import Any
 from uuid import uuid4
 
-from backend.mimo_client import MimoClient, SKYLER_SYSTEM_PROMPT
+from backend.ai_client import AIClient
+from backend.ai_provider import SKYLER_SYSTEM_PROMPT
 from backend.proposal_service import ProposalService
 from backend.retrieval_service import build_context, search_project
 from backend.supabase_client import SupabaseClient
 
 
 class ChatService:
-    def __init__(self, db: SupabaseClient | None = None, mimo: MimoClient | None = None):
-        self.db = db or SupabaseClient(); self.mimo = mimo or MimoClient(); self.proposals = ProposalService(self.db)
+    def __init__(self, db: SupabaseClient | None = None, ai: AIClient | None = None):
+        self.db = db or SupabaseClient(); self.ai = ai or AIClient(); self.proposals = ProposalService(self.db)
 
     def chat(self, *, message: str, channel: str, project_id: str | None = None, conversation_id: str | None = None) -> dict[str, Any]:
         project_id = project_id or self._active_project_id()
@@ -21,7 +22,7 @@ class ChatService:
         chunks = search_project(project_id, message, client=self.db) if project_id else []
         context, citations = build_context(chunks)
         messages = [{"role": "system", "content": SKYLER_SYSTEM_PROMPT}, *[{"role": row["role"], "content": row["content"]} for row in recent], {"role": "user", "content": message}]
-        result = self.mimo.structured_chat(messages=messages, context=context); envelope = result.envelope
+        result = self.ai.structured_chat(messages=messages, context=context); envelope = result.envelope
         payload = envelope.model_dump(mode="json"); payload["citations"] = payload.get("citations") or citations
         proposal_id = None
         if envelope.proposal_required and envelope.proposal is not None:
@@ -44,4 +45,3 @@ class ChatService:
     def _approval_mode(self) -> str:
         rows = self.db.table("app_settings", params={"select": "default_project_approval_mode", "id": "eq.singleton", "limit": 1}) or []
         return rows[0].get("default_project_approval_mode", "full_plan") if rows else "full_plan"
-

@@ -17,11 +17,11 @@ Login → create project → upload/scan evidence → AI analysis → review pro
 - PDF, DOCX, PPTX, XLSX, CSV, text, Markdown, JSON, images, and safe ZIP support.
 - Browser Tesseract OCR with editable output; scanned-PDF page OCR fallback.
 - Private Supabase Storage and PostgreSQL full-text retrieval with source references.
-- Xiaomi MiMo structured project planning, retry/repair, and proposal-only mutation path.
+- DeepSeek structured project planning, retry/repair, and proposal-only mutation path, with MiMo retained as an alternative provider.
 - Deterministic weighted progress, expected progress, variance, capacity, and risk.
 - Two-way Telegram commands, natural chat, inline progress/proposal buttons, and duplicate protection.
 - Supabase Cron SQL for 08:00 and 20:00 Asia/Kuala_Lumpur workflows.
-- Authenticated Supabase-backed projects, tasks, documents, proposals, Telegram workflows, and MiMo chat.
+- Authenticated Supabase-backed projects, tasks, documents, proposals, Telegram workflows, and DeepSeek chat.
 
 ## Screenshots
 
@@ -37,7 +37,7 @@ Login → create project → upload/scan evidence → AI analysis → review pro
 | API | Vercel Python Functions (`BaseHTTPRequestHandler`) |
 | Data/files | Supabase PostgreSQL, private Supabase Storage |
 | Search | PostgreSQL `tsvector` + GIN |
-| AI | Xiaomi MiMo token-plan API |
+| AI | DeepSeek API by default; Xiaomi MiMo remains selectable |
 | OCR | Tesseract.js + PDF.js in the browser |
 | Messaging | Telegram Bot API |
 | Scheduling | Supabase `pg_cron`, `pg_net`, Vault |

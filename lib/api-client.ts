@@ -39,8 +39,8 @@ export interface WorkspaceData {
   dailyPlan: DailyPlan | null;
 }
 
-export type ServiceName = "supabase" | "mimo" | "telegram";
-export type ServiceStatus = Record<ServiceName, { configured: boolean }>;
+export type ServiceName = "supabase" | "deepseek" | "mimo" | "telegram";
+export type ServiceStatus = Record<ServiceName, { configured: boolean; active?: boolean }>;
 
 type Row = Record<string, unknown>;
 

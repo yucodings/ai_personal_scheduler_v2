@@ -7,7 +7,7 @@ from backend.config import get_settings
 
 def main() -> int:
     settings = get_settings(); failures = 0
-    for capability in ("auth", "supabase", "mimo", "telegram", "cron"):
+    for capability in ("auth", "supabase", "ai", "telegram", "cron"):
         missing = settings.missing_for(capability)
         if missing: print(f"[missing] {capability}: {', '.join(missing)}"); failures += 1
         else: print(f"[ready]   {capability}")
@@ -16,4 +16,3 @@ def main() -> int:
     return 1 if failures else 0
 
 if __name__ == "__main__": raise SystemExit(main())
-

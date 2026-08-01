@@ -19,6 +19,7 @@ from backend.auth_service import create_session, login_throttle, verify_password
 from backend.chat_service import ChatService
 from backend.config import get_settings
 from backend.document_service import DocumentService
+from backend.deepseek_client import DeepSeekClient
 from backend.mimo_client import MimoClient
 from backend.project_service import ProjectService
 from backend.proposal_service import ProposalService
@@ -52,9 +53,11 @@ def _health(_handler) -> Response:
         "status": "ok",
         "services": {
             "supabase": not bool(settings.missing_for("supabase")),
+            "deepseek": not bool(settings.missing_for("deepseek")),
             "mimo": not bool(settings.missing_for("mimo")),
             "telegram": not bool(settings.missing_for("telegram")),
         },
+        "ai_provider": settings.ai_provider,
     }
     query = parse_qs(urlparse(_handler.path).query)
     if query.get("deep", [""])[0] == "1" and response["services"]["supabase"]:
@@ -130,7 +133,14 @@ def _service_status(handler) -> Response:
     settings = get_settings()
     return 200, {
         "supabase": {"configured": not settings.missing_for("supabase")},
-        "mimo": {"configured": not settings.missing_for("mimo")},
+        "deepseek": {
+            "configured": not settings.missing_for("deepseek"),
+            "active": settings.ai_provider == "deepseek",
+        },
+        "mimo": {
+            "configured": not settings.missing_for("mimo"),
+            "active": settings.ai_provider == "mimo",
+        },
         "telegram": {"configured": not settings.missing_for("telegram")},
     }, {"Cache-Control": "no-store"}
 
@@ -141,6 +151,9 @@ def _service_test(handler) -> Response:
     if service == "supabase":
         SupabaseClient().table("app_settings", params={"select": "id", "limit": 1})
         return 200, {"service": service, "connected": True, "message": "Database connection verified."}, None
+    if service == "deepseek":
+        connected = DeepSeekClient().test_connection()
+        return 200, {"service": service, "connected": connected, "message": "DeepSeek model connection verified."}, None
     if service == "mimo":
         connected = MimoClient().test_connection()
         return 200, {"service": service, "connected": connected, "message": "MiMo model connection verified."}, None
@@ -149,7 +162,7 @@ def _service_test(handler) -> Response:
         if not result.ok:
             raise ApiError(502, "TELEGRAM_TEST_FAILED", result.error or "Telegram test failed")
         return 200, {"service": service, "connected": True, "message": "A test message was sent to the configured chat."}, None
-    raise ApiError(400, "UNKNOWN_SERVICE", "Service must be supabase, mimo, or telegram")
+    raise ApiError(400, "UNKNOWN_SERVICE", "Service must be supabase, deepseek, mimo, or telegram")
 
 
 def _auth_login(handler) -> Response:

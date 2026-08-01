@@ -5,7 +5,8 @@
 - Node.js 20.9 or newer and npm.
 - Python 3.11 or newer.
 - A Supabase project (Singapore region is a practical choice for this app).
-- Optional until production: Xiaomi MiMo API key and Telegram bot.
+- A DeepSeek API key for production AI chat and planning.
+- Optional alternative: Xiaomi MiMo API key. Telegram is optional until its workflows are enabled.
 
 ## 1. Install locally
 
@@ -38,7 +39,7 @@ The migrations create UUID keys, constraints, indexes, update triggers, full-tex
 
 ## 4. Complete `.env.local`
 
-Use `.env.example` as the source of truth. Prefer `SUPABASE_SECRET_KEY` with the current `sb_secret_...` key from Supabase. `SUPABASE_SERVICE_ROLE_KEY` remains a legacy fallback. Both are server-only; never prefix either with `NEXT_PUBLIC_`. Validate names without exposing values:
+Use `.env.example` as the source of truth. Set `AI_PROVIDER=deepseek` and add `DEEPSEEK_API_KEY`; the existing MiMo variables can remain and are used only when `AI_PROVIDER=mimo`. Prefer `SUPABASE_SECRET_KEY` with the current `sb_secret_...` key from Supabase. `SUPABASE_SERVICE_ROLE_KEY` remains a legacy fallback. All API keys are server-only; never prefix them with `NEXT_PUBLIC_`. Validate names without exposing values:
 
 ```powershell
 .venv\Scripts\python scripts\verify_environment.py
@@ -57,4 +58,4 @@ Use `vercel dev` for local testing because it runs both the Next.js frontend and
 - PNG/JPG/JPEG run through Tesseract.js in the browser and show editable output.
 - PDFs can be rendered by PDF.js and OCR’d page by page when scanned.
 - English is configured first. Add trained languages via `OCR_LANGUAGES` and the adapter later.
-- Original images/PDFs are uploaded privately; MiMo receives extracted text, never raw images.
+- Original images/PDFs are uploaded privately; the selected AI provider receives extracted text, never raw images.

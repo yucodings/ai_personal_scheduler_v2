@@ -10,6 +10,7 @@ from typing import Any, Callable
 
 from pydantic import ValidationError
 
+from backend.ai_provider import AIProviderError
 from backend.auth_service import verify_session
 from backend.config import ConfigurationError, get_settings
 from backend.logging_utils import safe_log
@@ -138,6 +139,23 @@ def dispatch(handler, allowed_methods: set[str], action: Callable[[str], tuple[i
         status = 422; body = json.dumps(envelope(error={"code": "VALIDATION_ERROR", "message": exc.errors(include_url=False)[0]["msg"]}, request_id=request_id)).encode()
     except ConfigurationError as exc:
         status = 503; body = json.dumps(envelope(error={"code": "NOT_CONFIGURED", "message": str(exc)}, request_id=request_id)).encode()
+    except AIProviderError as exc:
+        safe_log(
+            "ai_provider_error",
+            request_id=request_id,
+            provider=exc.provider,
+            category=exc.category,
+            retryable=exc.retryable,
+        )
+        messages = {
+            "authentication": f"{exc.provider} rejected the configured API key. Check the server-only key in Vercel and redeploy.",
+            "balance": f"{exc.provider} has insufficient account balance.",
+            "rate_limit": f"{exc.provider} is rate-limiting requests. Please retry shortly.",
+            "provider": f"{exc.provider} is temporarily unavailable. Please retry shortly.",
+            "response": f"{exc.provider} returned an invalid response.",
+        }
+        status = 503 if exc.retryable else 502
+        body = json.dumps(envelope(error={"code": f"AI_{exc.category.upper()}", "message": messages.get(exc.category, str(exc))}, request_id=request_id)).encode()
     except SupabaseError as exc:
         code, message = describe_supabase_error(exc)
         safe_log(

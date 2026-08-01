@@ -33,11 +33,11 @@ flowchart LR
   C["Supabase Cron"] -->|"Bearer cron secret"| P
   P -->|"Service role; server only"| DB["Supabase PostgreSQL"]
   P -->|"Private objects / signed URLs"| ST["Supabase Storage"]
-  P -->|"Bounded project context"| M["Xiaomi MiMo"]
+  P -->|"Bounded project context"| M["DeepSeek (default) or Xiaomi MiMo"]
   P -->|"Bot token; allowed chat only"| T
 ```
 
-The browser never receives the Supabase service role, MiMo key, bot token, webhook secret, cron secret, or login hash. Exposed tables enable RLS and deny `anon`/`authenticated`; Python functions use the service role after their own session/cron/webhook checks.
+The browser never receives the Supabase server key, DeepSeek/MiMo keys, bot token, webhook secret, cron secret, or login hash. Exposed tables enable RLS and deny `anon`/`authenticated`; Python functions use the server key after their own session/cron/webhook checks.
 
 ## Request flows
 
@@ -49,7 +49,7 @@ sequenceDiagram
   participant W as Web
   participant P as Python functions
   participant S as Supabase
-  participant M as MiMo
+  participant M as Selected AI provider
   U->>W: Select project file
   alt Image or scanned PDF
     W->>W: Tesseract/PDF.js OCR
@@ -79,4 +79,3 @@ Calculated progress is `sum(task progress × effort weight) / sum(effort weight)
 ### Telegram
 
 Telegram validates `X-Telegram-Bot-Api-Secret-Token`, then compares the chat ID to the single allowed ID without revealing match details. A unique `update_id` insert prevents duplicate application. Commands and natural messages use the same project data and conversation tables as the web. Important date changes return inline approval controls.
-

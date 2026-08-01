@@ -10,6 +10,7 @@ import { apiClient, type ServiceName, type ServiceStatus } from "@/lib/api-clien
 
 const services: { name: ServiceName; title: string; detail: string; variables: string[]; icon: typeof Database }[] = [
   { name: "supabase", title: "Supabase", detail: "Database + private storage", variables: ["SUPABASE_URL", "SUPABASE_SECRET_KEY (preferred) or SUPABASE_SERVICE_ROLE_KEY (legacy)"], icon: Database },
+  { name: "deepseek", title: "DeepSeek", detail: "Active structured planning + chat", variables: ["AI_PROVIDER=deepseek", "DEEPSEEK_API_KEY", "DEEPSEEK_MODEL (optional)"], icon: Bot },
   { name: "mimo", title: "Xiaomi MiMo", detail: "Structured planning + chat", variables: ["MIMO_API_KEY"], icon: Bot },
   { name: "telegram", title: "Telegram", detail: "Webhook + daily workflows", variables: ["TELEGRAM_BOT_TOKEN", "TELEGRAM_ALLOWED_CHAT_ID", "TELEGRAM_WEBHOOK_SECRET"], icon: Send },
 ];
@@ -48,11 +49,12 @@ export default function SettingsPage() {
       <CardHeader><div><h2 className="text-lg font-semibold">Service connections</h2><p className="mt-1 text-sm text-slate-500">Add the listed variables in Vercel → Project → Settings → Environment Variables, then redeploy.</p></div><Badge tone="success">Production data</Badge></CardHeader>
       <CardContent>
         {statusError && <p className="mb-4 rounded-xl bg-rose-50 p-3 text-sm text-rose-700">{statusError}</p>}
-        <div className="grid gap-3 md:grid-cols-3">{services.map((service) => {
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">{services.map((service) => {
           const configured = status?.[service.name].configured ?? false;
+          const active = status?.[service.name].active ?? false;
           const result = results[service.name];
           return <div key={service.name} className="rounded-2xl border border-slate-200 p-4">
-            <div className="flex items-center justify-between"><div className="grid h-10 w-10 place-items-center rounded-xl bg-slate-100"><service.icon className="h-5 w-5" /></div><Badge tone={configured ? "success" : "warning"}>{status ? configured ? "Configured" : "Missing values" : "Checking…"}</Badge></div>
+            <div className="flex items-center justify-between"><div className="grid h-10 w-10 place-items-center rounded-xl bg-slate-100"><service.icon className="h-5 w-5" /></div><Badge tone={configured ? "success" : "warning"}>{status ? active ? "Active" : configured ? "Configured" : "Missing values" : "Checking…"}</Badge></div>
             <p className="mt-4 font-semibold">{service.title}</p><p className="mt-1 text-sm text-slate-500">{service.detail}</p>
             <div className="mt-3 space-y-1">{service.variables.map((variable) => <code key={variable} className="block break-all text-[11px] text-slate-500">{variable}</code>)}</div>
             {result && <p className={`mt-3 text-xs ${result.ok ? "text-emerald-700" : "text-rose-700"}`}>{result.message}</p>}

@@ -20,6 +20,13 @@ class Settings:
     supabase_publishable_key: str = ""
     supabase_service_role_key: str = ""
     storage_bucket: str = "project-files"
+    ai_provider: str = "deepseek"
+    deepseek_api_key: str = ""
+    deepseek_base_url: str = "https://api.deepseek.com"
+    deepseek_model: str = "deepseek-v4-flash"
+    deepseek_timeout_seconds: int = 60
+    deepseek_max_context_chars: int = 40000
+    deepseek_max_tokens: int = 8192
     mimo_api_key: str = ""
     mimo_base_url: str = "https://token-plan-sgp.xiaomimimo.com/v1"
     mimo_model: str = "mimo-v2.5"
@@ -45,6 +52,14 @@ class Settings:
     def supabase_configured(self) -> bool:
         return bool(self.supabase_url and self.supabase_service_role_key)
 
+    @property
+    def ai_max_context_chars(self) -> int:
+        return (
+            self.deepseek_max_context_chars
+            if self.ai_provider.lower() == "deepseek"
+            else self.mimo_max_context_chars
+        )
+
     @classmethod
     def from_env(cls) -> "Settings":
         return cls(
@@ -60,6 +75,13 @@ class Settings:
                 or os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
             ),
             storage_bucket=os.getenv("SUPABASE_STORAGE_BUCKET", "project-files"),
+            ai_provider=os.getenv("AI_PROVIDER", "deepseek").strip().lower(),
+            deepseek_api_key=os.getenv("DEEPSEEK_API_KEY", "").strip(),
+            deepseek_base_url=os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com").strip().rstrip("/"),
+            deepseek_model=os.getenv("DEEPSEEK_MODEL", "deepseek-v4-flash").strip(),
+            deepseek_timeout_seconds=_integer("DEEPSEEK_TIMEOUT_SECONDS", 60),
+            deepseek_max_context_chars=_integer("DEEPSEEK_MAX_CONTEXT_CHARS", 40000),
+            deepseek_max_tokens=_integer("DEEPSEEK_MAX_TOKENS", 8192),
             mimo_api_key=os.getenv("MIMO_API_KEY", ""),
             mimo_base_url=os.getenv("MIMO_BASE_URL", "https://token-plan-sgp.xiaomimimo.com/v1").rstrip("/"),
             mimo_model=os.getenv("MIMO_MODEL", "mimo-v2.5"),
@@ -79,12 +101,17 @@ class Settings:
         )
 
     def missing_for(self, capability: str) -> list[str]:
+        if capability == "ai":
+            if self.ai_provider not in {"deepseek", "mimo"}:
+                return ["AI_PROVIDER (deepseek or mimo)"]
+            capability = self.ai_provider
         requirements = {
             "auth": {"APP_LOGIN_PASSWORD_HASH": self.app_login_password_hash, "JWT_SECRET": self.jwt_secret},
             "supabase": {
                 "SUPABASE_URL": self.supabase_url,
                 "SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY": self.supabase_service_role_key,
             },
+            "deepseek": {"DEEPSEEK_API_KEY": self.deepseek_api_key},
             "mimo": {"MIMO_API_KEY": self.mimo_api_key},
             "telegram": {"TELEGRAM_BOT_TOKEN": self.telegram_bot_token, "TELEGRAM_ALLOWED_CHAT_ID": self.telegram_allowed_chat_id},
             "cron": {"CRON_SECRET": self.cron_secret},
