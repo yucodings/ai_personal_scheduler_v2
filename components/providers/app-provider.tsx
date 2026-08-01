@@ -22,7 +22,7 @@ interface AppState {
   setManualProgress(projectId: string, value: number | null): Promise<void>;
   addDocument(record: DocumentRecord): void;
   reviewProposal(id: string, action: "approve" | "reject" | "approve_milestone", milestoneId?: string): Promise<void>;
-  sendMessage(content: string, projectId?: string): Promise<void>;
+  sendMessage(content: string, projectId?: string, documentId?: string): Promise<void>;
   analyzeProject(projectId: string): Promise<string>;
 }
 
@@ -128,12 +128,12 @@ export function AppProvider({
     await refresh();
   }
 
-  async function sendMessage(content: string, projectId?: string) {
+  async function sendMessage(content: string, projectId?: string, documentId?: string) {
     const createdAt = new Date().toISOString();
     const userMessage: ChatMessage = { id: crypto.randomUUID(), role: "user", content, createdAt };
     setMessages((current) => [...current, userMessage]);
     try {
-      const response = await apiClient.chat(content, projectId);
+      const response = await apiClient.chat(content, projectId, documentId);
       const citations = Array.isArray(response.citations)
         ? response.citations.flatMap((value) => {
             if (!value || typeof value !== "object") return [];

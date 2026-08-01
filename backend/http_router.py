@@ -350,6 +350,7 @@ def _ai_chat(handler) -> Response:
         channel="web",
         project_id=str(data.project_id) if data.project_id else None,
         conversation_id=str(data.conversation_id) if data.conversation_id else None,
+        document_id=str(data.document_id) if data.document_id else None,
     )
     return 200, result, None
 

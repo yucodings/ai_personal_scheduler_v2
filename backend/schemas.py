@@ -88,7 +88,12 @@ class AIEnvelope(StrictModel):
         return self
 
 
-class ChatRequest(StrictModel): message: str = Field(min_length=1, max_length=20000); project_id: UUID | None = None; conversation_id: UUID | None = None; channel: Literal["web", "telegram"] = "web"
+class ChatRequest(StrictModel):
+    message: str = Field(min_length=1, max_length=20000)
+    project_id: UUID | None = None
+    conversation_id: UUID | None = None
+    document_id: UUID | None = None
+    channel: Literal["web", "telegram"] = "web"
 class ProposalReviewRequest(StrictModel): proposal_id: UUID; action: Literal["approve", "reject", "approve_milestone", "regenerate"]; milestone_id: str | None = None; edited_payload: dict[str, Any] | None = None
 
 
@@ -98,4 +103,3 @@ class DocumentFinalizeRequest(StrictModel):
     @field_validator("extracted_text")
     @classmethod
     def no_nul(cls, value: str): return value.replace("\x00", "")
-

@@ -9,7 +9,7 @@ from backend.ai_provider import SKYLER_SYSTEM_PROMPT
 from backend.config import Settings, get_settings
 from backend.project_service import ProjectService
 from backend.proposal_service import ProposalService
-from backend.retrieval_service import build_context, search_project
+from backend.retrieval_service import build_context, get_document_chunks, search_project
 from backend.schemas import ProjectInput
 from backend.supabase_client import SupabaseClient
 
@@ -63,6 +63,7 @@ class ChatService:
         channel: str,
         project_id: str | None = None,
         conversation_id: str | None = None,
+        document_id: str | None = None,
     ) -> dict[str, Any]:
         purge_expired_chat_history(self.db, self.settings)
         project_id = project_id or self._active_project_id()
@@ -102,7 +103,18 @@ class ChatService:
                 channel=channel,
             )
 
-        chunks = search_project(project_id, message, client=self.db) if project_id else []
+        chunks = (
+            get_document_chunks(project_id, document_id, client=self.db)
+            if project_id and document_id
+            else search_project(project_id, message, client=self.db) if project_id else []
+        )
+        if document_id and not chunks:
+            return self._simple_reply(
+                "The attached file is not ready, has no readable text, or does not belong to this project.",
+                conversation_id=conversation_id,
+                channel=channel,
+                project_id=project_id,
+            )
         context, citations = build_context(chunks, self.settings)
         messages = [
             {"role": "system", "content": SKYLER_SYSTEM_PROMPT},

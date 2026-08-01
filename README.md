@@ -16,6 +16,7 @@ Login → create project → upload/scan evidence → AI analysis → review pro
 - Full project/milestone/task/subtask/dependency/progress hierarchy.
 - PDF, DOCX, PPTX, XLSX, CSV, text, Markdown, JSON, images, and safe ZIP support.
 - Browser Tesseract OCR with editable output; scanned-PDF page OCR fallback.
+- Direct Skyler chat attachments with OCR/extraction, private indexing, and source-grounded answers.
 - Private Supabase Storage and PostgreSQL full-text retrieval with source references.
 - DeepSeek structured project planning, retry/repair, and proposal-only mutation path, with MiMo retained as an alternative provider.
 - Deterministic weighted progress, expected progress, variance, capacity, and risk.

@@ -2,14 +2,28 @@ from __future__ import annotations
 
 from copy import deepcopy
 from datetime import datetime, timezone
+from types import SimpleNamespace
 
 from backend.chat_service import ChatService, purge_expired_chat_history
 from backend.config import Settings
+from backend.schemas import AIEnvelope
 
 
 class NeverAI:
     def structured_chat(self, **_kwargs):
         raise AssertionError("Project creation should not call the AI provider")
+
+
+class RecordingAI:
+    def __init__(self):
+        self.context = ""
+
+    def structured_chat(self, **kwargs):
+        self.context = kwargs.get("context", "")
+        return SimpleNamespace(envelope=AIEnvelope(
+            reply="The attached brief says the report is due Friday.",
+            intent="query_project",
+        ))
 
 
 class FakeChatDatabase:
@@ -24,6 +38,8 @@ class FakeChatDatabase:
         }]
         self.delete_calls = []
         self.next_message_id = 1
+        self.documents = []
+        self.chunks = []
 
     def table(self, table, method="GET", params=None, data=None, **_kwargs):
         params = params or {}
@@ -82,6 +98,26 @@ class FakeChatDatabase:
                         row.update(deepcopy(data))
                         return [deepcopy(row)]
                 return []
+
+        if table == "project_documents" and method == "GET":
+            document_id = params.get("id", "eq.")[3:]
+            project_id = params.get("project_id", "eq.")[3:]
+            return [
+                deepcopy(row)
+                for row in self.documents
+                if row["id"] == document_id
+                and row["project_id"] == project_id
+                and row.get("extraction_status") == "completed"
+            ]
+
+        if table == "document_chunks" and method == "GET":
+            document_id = params.get("document_id", "eq.")[3:]
+            project_id = params.get("project_id", "eq.")[3:]
+            return [
+                deepcopy(row)
+                for row in self.chunks
+                if row["document_id"] == document_id and row["project_id"] == project_id
+            ][: int(params.get("limit", 12))]
 
         if table == "app_settings":
             return [{"default_project_approval_mode": "full_plan"}]
@@ -168,3 +204,51 @@ def test_legacy_raw_deepseek_project_proposal_can_still_be_approved():
 
     assert result["workspace_changed"] is True
     assert database.projects[0]["title"] == "Legacy Project"
+
+
+def test_chat_uses_the_explicitly_attached_document_as_ai_context():
+    database = FakeChatDatabase()
+    database.documents.append({
+        "id": "document-1",
+        "project_id": "project-1",
+        "original_filename": "brief.png",
+        "extraction_status": "completed",
+    })
+    database.chunks.append({
+        "id": "chunk-1",
+        "document_id": "document-1",
+        "project_id": "project-1",
+        "chunk_index": 0,
+        "reference": "chunk 1",
+        "content": "The final report must be submitted on Friday.",
+    })
+    ai = RecordingAI()
+    service = ChatService(database, ai, Settings(ai_provider="deepseek", chat_retention_days=7))
+
+    result = service.chat(
+        message="Summarize the attached file.",
+        channel="web",
+        project_id="project-1",
+        document_id="document-1",
+    )
+
+    assert result["reply"] == "The attached brief says the report is due Friday."
+    assert "brief.png" in ai.context
+    assert "submitted on Friday" in ai.context
+
+
+def test_chat_does_not_answer_without_readable_attached_document_context():
+    service = ChatService(
+        FakeChatDatabase(),
+        NeverAI(),
+        Settings(ai_provider="deepseek", chat_retention_days=7),
+    )
+
+    result = service.chat(
+        message="Summarize the attached file.",
+        channel="web",
+        project_id="project-1",
+        document_id="missing-document",
+    )
+
+    assert "not ready" in result["reply"]

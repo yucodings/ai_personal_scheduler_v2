@@ -44,6 +44,51 @@ def search_project(project_id: str, query: str, *, limit: int = 8, client: Supab
     return [RetrievedChunk(str(row["chunk_id"]), str(row["document_id"]), row["original_filename"], row.get("reference") or f"chunk {row.get('chunk_index', 0) + 1}", row["content"], float(row.get("rank", 0))) for row in rows]
 
 
+def get_document_chunks(
+    project_id: str,
+    document_id: str,
+    *,
+    limit: int = 12,
+    client: SupabaseClient | None = None,
+) -> list[RetrievedChunk]:
+    """Load an explicitly attached document without relying on search terms."""
+    db = client or SupabaseClient()
+    documents = db.table(
+        "project_documents",
+        params={
+            "select": "id,original_filename",
+            "id": f"eq.{document_id}",
+            "project_id": f"eq.{project_id}",
+            "extraction_status": "eq.completed",
+            "limit": 1,
+        },
+    ) or []
+    if not documents:
+        return []
+    rows = db.table(
+        "document_chunks",
+        params={
+            "select": "id,document_id,chunk_index,reference,content",
+            "document_id": f"eq.{document_id}",
+            "project_id": f"eq.{project_id}",
+            "order": "chunk_index.asc",
+            "limit": min(limit, 20),
+        },
+    ) or []
+    filename = str(documents[0]["original_filename"])
+    return [
+        RetrievedChunk(
+            str(row["id"]),
+            str(row["document_id"]),
+            filename,
+            row.get("reference") or f"chunk {row.get('chunk_index', 0) + 1}",
+            str(row["content"]),
+            1.0,
+        )
+        for row in rows
+    ]
+
+
 def build_context(chunks: list[RetrievedChunk], settings: Settings | None = None) -> tuple[str, list[dict[str, Any]]]:
     config = settings or get_settings(); pieces: list[str] = []; citations: list[dict[str, Any]] = []; used = 0
     for chunk in chunks:

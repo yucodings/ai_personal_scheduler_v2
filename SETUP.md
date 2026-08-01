@@ -61,3 +61,4 @@ Use `vercel dev` for local testing because it runs both the Next.js frontend and
 - PDFs can be rendered by PDF.js and OCR’d page by page when scanned.
 - English is configured first. Add trained languages via `OCR_LANGUAGES` and the adapter later.
 - Original images/PDFs are uploaded privately; the selected AI provider receives extracted text, never raw images.
+- The Ask Skyler paperclip accepts the same supported project files. It indexes the selected file first, then sends its document ID so the reply is grounded in that exact attachment.
