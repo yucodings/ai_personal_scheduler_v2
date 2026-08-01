@@ -93,6 +93,12 @@ def describe_supabase_error(error: SupabaseError) -> tuple[str, str]:
     provider_code = error.provider_code.upper()
     message = str(error).lower()
     schema_codes = {"PGRST200", "PGRST202", "PGRST205", "42P01", "42703", "42883"}
+    if provider_code == "INVALID_URL":
+        return (
+            "SUPABASE_CONFIGURATION_INVALID",
+            "SUPABASE_URL must be the HTTPS Project URL from Supabase Project Settings → API, "
+            "for example https://your-project-ref.supabase.co. Do not use the PostgreSQL connection string.",
+        )
     if provider_code in schema_codes or "schema cache" in message or "does not exist" in message:
         return (
             "SUPABASE_SCHEMA_MISSING",

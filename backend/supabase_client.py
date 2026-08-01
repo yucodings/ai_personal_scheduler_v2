@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from typing import Any
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 import requests
 
@@ -23,6 +23,13 @@ class SupabaseClient:
         self.settings.require("supabase")
         self.session = session or requests.Session()
         self.base = self.settings.supabase_url
+        parsed_url = urlparse(self.base)
+        if parsed_url.scheme not in {"http", "https"} or not parsed_url.netloc:
+            raise SupabaseError(
+                "SUPABASE_URL is not an HTTP project URL",
+                status=503,
+                provider_code="INVALID_URL",
+            )
         server_key = self.settings.supabase_service_role_key
         self.headers = {"apikey": server_key, "Content-Type": "application/json"}
         # New Supabase secret keys are API keys, not JWTs. Legacy service_role
@@ -58,10 +65,20 @@ class SupabaseClient:
         try:
             return self.session.request(method, url, **kwargs)
         except requests.RequestException as exc:
+            provider_code = "NETWORK_ERROR"
+            if isinstance(
+                exc,
+                (requests.exceptions.MissingSchema, requests.exceptions.InvalidSchema, requests.exceptions.InvalidURL),
+            ):
+                provider_code = "INVALID_URL"
+            elif isinstance(exc, requests.exceptions.SSLError):
+                provider_code = "TLS_ERROR"
+            elif isinstance(exc, requests.exceptions.Timeout):
+                provider_code = "TIMEOUT"
             raise SupabaseError(
                 "Supabase could not be reached",
                 status=503,
-                provider_code="NETWORK_ERROR",
+                provider_code=provider_code,
             ) from exc
 
     @staticmethod

@@ -46,6 +46,18 @@ def test_legacy_supabase_service_role_key_keeps_bearer_header():
     assert client.headers["Authorization"] == "Bearer legacy.jwt.value"
 
 
+def test_supabase_rejects_database_connection_string_as_api_url():
+    settings = Settings(
+        supabase_url="postgresql://postgres.example:5432/postgres",
+        supabase_service_role_key="sb_secret_current",
+    )
+    with pytest.raises(SupabaseError) as error:
+        SupabaseClient(settings)
+    code, message = describe_supabase_error(error.value)
+    assert code == "SUPABASE_CONFIGURATION_INVALID"
+    assert "HTTPS Project URL" in message
+
+
 def test_supabase_failures_produce_safe_actionable_messages():
     schema_code, schema_message = describe_supabase_error(
         SupabaseError("Could not find the table public.projects in the schema cache", 404, "PGRST205")

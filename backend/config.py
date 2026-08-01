@@ -53,7 +53,7 @@ class Settings:
             jwt_secret=os.getenv("JWT_SECRET", ""),
             session_expiry_hours=_integer("SESSION_EXPIRY_HOURS", 168),
             cron_secret=os.getenv("CRON_SECRET", ""),
-            supabase_url=os.getenv("SUPABASE_URL", "").rstrip("/"),
+            supabase_url=os.getenv("SUPABASE_URL", "").strip().rstrip("/"),
             supabase_publishable_key=os.getenv("SUPABASE_PUBLISHABLE_KEY", ""),
             supabase_service_role_key=(
                 os.getenv("SUPABASE_SECRET_KEY", "").strip()
